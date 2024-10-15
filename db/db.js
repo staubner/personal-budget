@@ -62,8 +62,23 @@ function getEnvelopeByName(name) {
     return foundEnvelope;
 }
 
-function updateEnvelope(id, amountSpent, newName) {
+function updateEnvelope(id, spend, newName) {
+    if (envelopes.length === 0) {
+        return null;
+    }
+    if (typeof spend !== 'number' || spend <= 0) {
+        return -1;
+    }
 
+    const envelopeIndex = envelopes.findIndex(env => env.id === id);
+    if (envelopeIndex !== -1) {
+        if (newName) {
+            envelopes[envelopeIndex].name = newName;
+        }
+        envelopes[envelopeIndex].spent += spend;
+    }
+
+    return envelopes[envelopeIndex];
 }
 
 module.exports = {

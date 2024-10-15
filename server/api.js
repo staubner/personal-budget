@@ -8,7 +8,7 @@ const {
     getEnvelopeById,
     getEnvelopeByName,
     updateEnvelope,
-    
+
 } = require('../db/db')
 
 apiRouter.use(bodyParser.json());
@@ -52,7 +52,20 @@ apiRouter.post('/envelopes', (req, res) => {
 });
 
 apiRouter.put('/envelopes/:id', (req, res) => {
+    envelopeId = req.params.id;
+    amountSpent = Number(req.query.spent);
+    newName = req.query.newname;
 
+    const updatedEnvelope = updateEnvelope(envelopeId, amountSpent, newName)
+
+    if (updatedEnvelope == null) {
+        res.status(400).send('You have no envelopes to update!')
+    }
+    if (updatedEnvelope === -1) {
+        res.status(400).send('There is a problem with the entered spend amount, please try again.')
+    }
+
+    res.status(200).send(updatedEnvelope);
 })
 
 module.exports = apiRouter;
