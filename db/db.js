@@ -23,6 +23,15 @@ const envelopes = [
     }
 ]
 
+function dupeNameCheck(newName) {
+    const dupe = envelopes.findIndex(env => env.name === newName);
+    if (dupe !== -1) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 function getAllEnvelopes() {
     return envelopes
 }
@@ -62,23 +71,32 @@ function getEnvelopeByName(name) {
     return foundEnvelope;
 }
 
-function updateEnvelope(id, spend, newName) {
-    if (envelopes.length === 0) {
+function updateEnvelope(envelope, spend, newSaveAmount, newName) {
+    const updatedEnvelope = envelope;
+
+    if (newName && dupeNameCheck(newName) === true) {
         return null;
     }
-    if (typeof spend !== 'number' || spend <= 0) {
+
+    if ((spend && newSaveAmount) && spend <= 0 || newSaveAmount < 0) {
         return -1;
     }
 
-    const envelopeIndex = envelopes.findIndex(env => env.id === id);
-    if (envelopeIndex !== -1) {
-        if (newName) {
-            envelopes[envelopeIndex].name = newName;
-        }
-        envelopes[envelopeIndex].spent += spend;
+    if (spend) {
+        updatedEnvelope.spent += spend;
+    }
+    if (newSaveAmount) {
+        updatedEnvelope.saveAmount = newSaveAmount;
+    }
+    if (newName) {
+        updatedEnvelope.name = newName;
     }
 
-    return envelopes[envelopeIndex];
+    const envelopeToReplace = envelopes.findIndex(env => env.id === envelope.id);
+
+    envelopes.splice(envelopeToReplace, 1, updatedEnvelope)
+
+    return updatedEnvelope;
 }
 
 module.exports = {
