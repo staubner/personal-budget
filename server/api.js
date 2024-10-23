@@ -22,43 +22,53 @@ apiRouter.param('id', (req, res, next, id) => {
         req.envelope = envelope;
         next();
     } else {
-        res.status(404).send();
+        const err = new Error('Envelope not found')
+        err.status = 404;
+        return next(err);
     }
 })
 
-apiRouter.get('/envelopes', (req, res) => {
+//get all envelopes
+apiRouter.get('/envelopes', (req, res, next) => {
     res.send(getAllEnvelopes())
 });
 
-apiRouter.get('/envelopes/:id', (req, res) => {
+//get envelope by id
+apiRouter.get('/envelopes/:id', (req, res, next) => {
     const envelope = req.envelope;
     if (!envelope) {
-        res.status(404).send('No envelope found!')
+        const err = new Error('No envelope found')
+        err.status = 404
+        return next(err);
     }
     res.status(200).send(envelope);
 })
 
-apiRouter.post('/envelopes', (req, res) => {
+//create new envelope
+apiRouter.post('/envelopes', (req, res, next) => {
     const { name, saveAmount } = req.body;
-    const dupe = getEnvelopeByName(name);
-    if (dupe) {
-        res.status(400).send("You already have an envelope with this name. Please choose a different name.")
-        return;
-    }
 
     const newEnvelope = addEnvelope(name, saveAmount);
-    if (newEnvelope === null) {
-        res.status(400).send("There's a problem with your new envelope! Please double check the name and amount entered.")
+    if (newEnvelope == null) {
+        const err = new Error('Please double check the name and amount entered.')
+        err.status = 400;
+        return next(err);
+    } else if (newEnvelope == false) {
+        const err = new Error('This envelope already exists, please choose another name.')
+        err.status = 400;
+        return next(err);
+    } else if (newEnvelope === -1) {
+        const err = new Error("You've entered a negative amount for your amount to save! Please make sure to enter a valid number.")
+        err.status = 400;
+        return next(err);
+    } else {
+        res.status(201).send(newEnvelope);
     }
-    if (newEnvelope === -1) {
-        res.status(400).send("You've entered a negative amount for your amount to save!")
-    }
-
-    res.status(201).send(newEnvelope);
 });
 
-apiRouter.post('/envelopes/:id', (req, res) => {
-    const spendAmount = Number(req.body.spent);
+//spend money
+apiRouter.post('/envelopes/:id', (req, res, next) => {
+    const spendAmount = req.body.spend;
     const envelope = req.envelope;
 
     const updatedEnvelope = spendMoney(envelope, spendAmount)
@@ -66,47 +76,50 @@ apiRouter.post('/envelopes/:id', (req, res) => {
     res.status(200).send(updatedEnvelope);
 })
 
-apiRouter.post('/envelopes/transfer/:to/:from', (req, res) => {
+//transfer budget between envelopes
+apiRouter.post('/envelopes/transfer/:to/:from', (req, res, next) => {
     const transferTo = req.params.to;
     const transferFrom = req.params.from;
-    const amount = Number(req.body.amount);
+    const amount = req.body.amount;
 
     const transfer = transferBudget(transferTo, transferFrom, amount);
 
     if (transfer == null) {
-        res.status(400).send('Please enter a valid transfer amount!')
-    } else if (transfer == false) {
-        res.status(404).send('One or more envelopes not found.')
+        const err = new Error('Please enter a valid transfer amount')
+        err.status = 400
+        return next(err)
     } else if (transfer === -1) {
-        res.status(400).send("You can't have a save amount below $0, please enter a different amount.")
+        const err = new Error("You can't save less than $0, please enter a different amount")
+        err.status = 400
+        return next(err)
     } else {
         res.status(200).send(transfer);
     }
 })
 
-apiRouter.put('/envelopes/:id', (req, res) => {
+//update an envelope's properties
+apiRouter.put('/envelopes/:id', (req, res, next) => {
     const envelope = req.envelope;
-    const amountSpent = Number(req.body.spent);
     const newName = req.body.newname;
-    const newSaveAmount = Number(req.body.newsaveamount);
-
-    if (!envelope) {
-        res.status(404).send('No envelope found!')
-    }
+    const newSaveAmount = req.body.newsaveamount;
 
     const newEnvelope = updateEnvelope(envelope, newSaveAmount, newName)
 
     if (newEnvelope == null) {
-        res.status(400).send('You have entered a duplicate name! Please choose another name.')
+        const err = new Error('You have entered a duplicate name! Please choose a different name.')
+        err.status = 400;
+        return next(err);
+    } else if (newEnvelope === -1) {
+        const err = new Error('You have entered an invalid amount; please enter a valid spend or save amount.')
+        err.status = 400;
+        return next(err);
+    } else {
+        res.status(200).send(newEnvelope);
     }
-    if (newEnvelope === -1) {
-        res.status(400).send('You have entered an invalid amount; please enter a valid spend or save amount.')
-    }
-
-    res.status(200).send(newEnvelope);
 })
 
-apiRouter.delete('/envelopes/:id', (req, res) => {
+//delete an envelope
+apiRouter.delete('/envelopes/:id', (req, res, next) => {
     const deleted = deleteEnvelope(req.envelope.id);
     if (deleted) {
         res.status(204);
@@ -115,5 +128,13 @@ apiRouter.delete('/envelopes/:id', (req, res) => {
     }
     res.send();
 })
+
+//error handler
+apiRouter.use((err, req, res, next) => {
+    if (!err.status) {
+        err.status = 500;
+    }
+    res.status(err.status).send(err.message);
+});
 
 module.exports = apiRouter;
