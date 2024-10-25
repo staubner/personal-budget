@@ -46,9 +46,9 @@ apiRouter.get('/envelopes/:id', (req, res, next) => {
 
 //create new envelope
 apiRouter.post('/envelopes', (req, res, next) => {
-    const { name, saveAmount } = req.body;
+    const { name, saveamount } = req.body;
 
-    const newEnvelope = addEnvelope(name, saveAmount);
+    const newEnvelope = addEnvelope(name, saveamount);
     if (newEnvelope == null) {
         const err = new Error('Please double check the name and amount entered.')
         err.status = 400;
