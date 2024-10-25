@@ -112,19 +112,24 @@ function spendMoney(envelope, spend) {
   return updatedEnvelope;
 }
 
-function updateEnvelope(envelope, newSaveAmount, newName) {
+function updateEnvelope(envelope, newSpent, newSaveAmount, newName) {
   const updatedEnvelope = envelope;
 
   if (newName && dupeNameCheck(newName) === true) {
     return null;
   }
-
-  if (newSaveAmount < 0) {
+  if (newSaveAmount && newSaveAmount < 0) {
     return -1;
   }
-
+  if (newSpent && newSpent < 0){
+    return -1;
+  }
   if (newSaveAmount) {
     updatedEnvelope.saveAmount = newSaveAmount;
+    toggleWarning(updatedEnvelope);
+  }
+  if (newSpent) {
+    updatedEnvelope.spent = newSpent;
     toggleWarning(updatedEnvelope);
   }
   if (newName) {

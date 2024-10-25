@@ -102,8 +102,9 @@ apiRouter.put('/envelopes/:id', (req, res, next) => {
     const envelope = req.envelope;
     const newName = req.body.newname;
     const newSaveAmount = req.body.newsaveamount;
+    const newSpentAmount = req.body.newspentamount;
 
-    const newEnvelope = updateEnvelope(envelope, newSaveAmount, newName)
+    const newEnvelope = updateEnvelope(envelope, newSpentAmount, newSaveAmount, newName)
 
     if (newEnvelope == null) {
         const err = new Error('You have entered a duplicate name! Please choose a different name.')
